@@ -246,3 +246,24 @@ void loop(){
   my_delay(1000);
 }
 
+/*
+//NOTE: SET PIN 5 and 6 to input in setup function
+ //0xF7 rotate counter clockwise, 0xFD clockwise;, LSB (i.e PH0) is enable
+  //*portH |= 0xFD;
+  if(digitalRead(Pin5) == HIGH){
+    //*portH |= 0xFD;
+    //Rotate CW slowly at 5 RPM
+    myStepper.setSpeed(5);
+    //Rotates clockwise if output is high, otherwise stops
+    myStepper.step(10);
+  }
+  else if(digitalRead(6) == HIGH){
+    //Rotate CW slowly at 5 RPM
+    myStepper.setSpeed(5);
+    //Rotates clockwise if output is high, otherwise stops
+    myStepper.step(-10);
+  }
+  else{
+    //*portH &= 0xFC;
+  }
+*/
