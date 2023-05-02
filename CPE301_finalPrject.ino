@@ -1,4 +1,5 @@
 #include <LiquidCrystal.h>
+#include <DHT.h>
 #include <Stepper.h>
 //timers for my delay:
 volatile unsigned char *myTCCR1A = (unsigned char *) 0x80;
@@ -14,35 +15,37 @@ volatile unsigned char* ddr_h = (unsigned char*) 0x101;
 volatile unsigned char* pin_h = (unsigned char*) 0x100; 
 
 
-//UART Pointers
-volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
+
+/*volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
 volatile unsigned char *myUCSR0B = (unsigned char *)0x00C1;
 volatile unsigned char *myUCSR0C = (unsigned char *)0x00C2;
 volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4;
-volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
-
+volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;*/
 //adc pointers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
 volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
 volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
 volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 
-#define POWER_PIN  7
+#define POWER_PIN 7
 #define SIGNAL_PIN 5
+
+#define DHT11_PIN 6
 
 int value = 0; // variable to store the sensor value
 int newValue = 0;
 bool lowFlag = 0;
 bool medFlag = 0;
 bool highFlag = 0;
-const int stepsPerRevolution = 2038; //steps for stepper motor
 
-Stepper myStepper = Stepper(stepsPerRevolution, 8, 10, 9, 11);
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+DHT HT(DHT11_PIN, DHT11);
+LiquidCrystal lcd(24, 26, 28, 30, 32, 34);
 
 void setup() {
-  U0Init(9600);
-  analogWrite(6,0);
+  Serial.begin(9600);
+  analogWrite(22, 0);
+  //analogWrite(6,0);
+  HT.begin();
   lcd.begin(16,2);
   //pinMode(POWER_PIN, OUTPUT);   // configure D7 pin as an OUTPUT
   *ddr_h |= 0x10;
@@ -51,13 +54,8 @@ void setup() {
 
   adc_init();
   //lcd.print("Sensor: ");
-  
-  /*
-  // set PH0, PH1, PH3 to output
-  *portDDRH |= 0x0B;
-  // set PH0, PH1, PH3 LOW
-  *portH &= 0xF4;
-  */
+  lcd.clear();
+  //lcd.print("hello");
 }
 
 void loop() {
@@ -68,27 +66,25 @@ void loop() {
   value = adc_read(SIGNAL_PIN);
   //digitalWrite(POWER_PIN, LOW);   // turn the sensor OFF
   *port_h &= 0xEF;
-  
-  
-  /*
-  //0xF7 rotate counter clockwise, 0xFD clockwise;, LSB (i.e PH0) is enable
-  *portH |= 0xFC;
-  if(digitalRead(Pin5) == HIGH){
-    //Rotate CW slowly at 5 RPM
-    myStepper.setSpeed(5);
-    //Rotates clockwise if output is high, otherwise stops
-    myStepper.step(1);
-  }
-  */
 
+  //lcd.clear();
+  //lcd.print(value);
   if(value <= 160)
   {
     if(!lowFlag)
     {
+      lcd.clear();
       newValue = value;
      // Serial.println(value);
-      lcd.clear();
-      lcd.print("LOW ");
+      float h = HT.readHumidity();
+      lcd.print("H = ");
+      lcd.print(h);
+      lcd.setCursor(0, 1);
+      double t = HT.readTemperature(true);
+      lcd.print("T = ");
+      lcd.print(t);
+      //lcd.clear();
+      lcd.print(" ");
       lcd.print(value);
       lowFlag = 1;
       medFlag = 0;
@@ -100,10 +96,18 @@ void loop() {
   {
     if(!medFlag)
     {
+      lcd.clear();
       newValue = value;
       //Serial.println(value);
-      lcd.clear();
-      lcd.print("MED "); 
+      float h = HT.readHumidity();
+      lcd.print("H = ");
+      lcd.print(h);
+      lcd.setCursor(0, 1);
+      float t = HT.readTemperature(true);
+      lcd.print("T = ");
+      lcd.print(t);
+      //lcd.clear();
+      lcd.print(" "); 
       lcd.print(value);
       lowFlag = 0;
       medFlag = 1;
@@ -111,36 +115,40 @@ void loop() {
     }
     
   }
-  else if (value > 165 && value <= 170)
+  else if(value > 165 && value <= 170)
   {
     if(!highFlag)
     {
       newValue = value;
      // Serial.println(value);
       lcd.clear();
-      lcd.print("HIGH ");
-      lcd.print(value); 
+      //lcd.print("HIGH ");
+     // lcd.print(value); 
+      float h = HT.readHumidity();
+      lcd.print("H = ");
+      lcd.print(h);
+      lcd.setCursor(0, 1);
+      float t = HT.readTemperature(true);
+      lcd.print("T = ");
+      lcd.print(t);
+      Serial.print(" ");
+      Serial.print(value);   
       lowFlag = 0;
       medFlag = 0;
-      highFlag = 1;      
+      highFlag = 1;   
+      
     }
   }
-  Serial.println(value);
+  //Serial.println(value);
   //lcd.clear();
+  /*float h = HT.readHumidity();
+  lcd.print("Humidity = ");
+  lcd.print(h);
+  float t = HT.readTemperature(true);
+  lcd.print(" Temperature = ");
+  lcd.println(t);*/
 
-  my_delay(10000);
-}
-
-void U0Init(int U0baud)
-{
-  unsigned long FCPU = 16000000;
-  unsigned int tbaud;
-  tbaud = (FCPU / 16 / U0baud - 1);
-  // Same as (FCPU / (16 * U0baud)) - 1;
-  *myUCSR0A = 0x20;
-  *myUCSR0B = 0x18;
-  *myUCSR0C = 0x06;
-  *myUBRR0  = tbaud;
+  //my_delay(10000);*/
 }
 
 void my_delay(unsigned int freq)
@@ -208,43 +216,6 @@ unsigned int adc_read(unsigned char adc_channel_num)
 }
 
 
-#include <DHT.h>
-//#include <DHT_U.h>
-
-volatile unsigned char *myTCCR1A = (unsigned char *) 0x80;
-volatile unsigned char *myTCCR1B = (unsigned char *) 0x81;
-volatile unsigned char *myTCCR1C = (unsigned char *) 0x82;
-volatile unsigned char *myTIMSK1 = (unsigned char *) 0x6F;
-volatile unsigned int  *myTCNT1  = (unsigned  int *) 0x84;
-volatile unsigned char *myTIFR1 =  (unsigned char *) 0x36;
-
-#define DHT11_PIN 7
-
-DHT HT(DHT11_PIN, DHT11);
-
-
-
-void setup(){
-  *myTCCR1A = 0x00; //normal mode
-  *myTCCR1B = 0x01; // no prescaling
-  *myTCCR1C = 0x00; //no force output compare
-  *myTIFR1 = 0x01;
-
-  Serial.begin(9600);
-  HT.begin();
-}
-
-void loop(){
-  Serial.print("before ");
-  Serial.println(*myTIFR1, HEX);
-  float h = HT.readHumidity();
-  Serial.print("Humidity = ");
-  Serial.print(h);
-  float t = HT.readTemperature(true);
-  Serial.print(" Temperature = ");
-  Serial.println(t);
-  my_delay(1000);
-}
 
 /*
 //NOTE: SET PIN 5 and 6 to input in setup function
