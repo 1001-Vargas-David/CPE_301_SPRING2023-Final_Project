@@ -1,4 +1,5 @@
 #include <LiquidCrystal.h>
+#include <Stepper.h>
 //timers for my delay:
 volatile unsigned char *myTCCR1A = (unsigned char *) 0x80;
 volatile unsigned char *myTCCR1B = (unsigned char *) 0x81;
@@ -13,12 +14,13 @@ volatile unsigned char* ddr_h = (unsigned char*) 0x101;
 volatile unsigned char* pin_h = (unsigned char*) 0x100; 
 
 
-
-/*volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
+//UART Pointers
+volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
 volatile unsigned char *myUCSR0B = (unsigned char *)0x00C1;
 volatile unsigned char *myUCSR0C = (unsigned char *)0x00C2;
 volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4;
-volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;*/
+volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
+
 //adc pointers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
 volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
@@ -33,11 +35,13 @@ int newValue = 0;
 bool lowFlag = 0;
 bool medFlag = 0;
 bool highFlag = 0;
+const int stepsPerRevolution = 2038; //steps for stepper motor
 
+Stepper myStepper = Stepper(stepsPerRevolution, 8, 10, 9, 11);
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 void setup() {
-  Serial.begin(9600);
+  U0Init(9600);
   analogWrite(6,0);
   lcd.begin(16,2);
   //pinMode(POWER_PIN, OUTPUT);   // configure D7 pin as an OUTPUT
@@ -47,6 +51,13 @@ void setup() {
 
   adc_init();
   //lcd.print("Sensor: ");
+  
+  /*
+  // set PH0, PH1, PH3 to output
+  *portDDRH |= 0x0B;
+  // set PH0, PH1, PH3 LOW
+  *portH &= 0xF4;
+  */
 }
 
 void loop() {
@@ -57,6 +68,18 @@ void loop() {
   value = adc_read(SIGNAL_PIN);
   //digitalWrite(POWER_PIN, LOW);   // turn the sensor OFF
   *port_h &= 0xEF;
+  
+  
+  /*
+  //0xF7 rotate counter clockwise, 0xFD clockwise;, LSB (i.e PH0) is enable
+  *portH |= 0xFC;
+  if(digitalRead(Pin5) == HIGH){
+    //Rotate CW slowly at 5 RPM
+    myStepper.setSpeed(5);
+    //Rotates clockwise if output is high, otherwise stops
+    myStepper.step(1);
+  }
+  */
 
   if(value <= 160)
   {
@@ -106,6 +129,18 @@ void loop() {
   //lcd.clear();
 
   my_delay(10000);
+}
+
+void U0Init(int U0baud)
+{
+  unsigned long FCPU = 16000000;
+  unsigned int tbaud;
+  tbaud = (FCPU / 16 / U0baud - 1);
+  // Same as (FCPU / (16 * U0baud)) - 1;
+  *myUCSR0A = 0x20;
+  *myUCSR0B = 0x18;
+  *myUCSR0C = 0x06;
+  *myUBRR0  = tbaud;
 }
 
 void my_delay(unsigned int freq)
