@@ -207,3 +207,42 @@ unsigned int adc_read(unsigned char adc_channel_num)
   return *my_ADC_DATA;
 }
 
+
+#include <DHT.h>
+//#include <DHT_U.h>
+
+volatile unsigned char *myTCCR1A = (unsigned char *) 0x80;
+volatile unsigned char *myTCCR1B = (unsigned char *) 0x81;
+volatile unsigned char *myTCCR1C = (unsigned char *) 0x82;
+volatile unsigned char *myTIMSK1 = (unsigned char *) 0x6F;
+volatile unsigned int  *myTCNT1  = (unsigned  int *) 0x84;
+volatile unsigned char *myTIFR1 =  (unsigned char *) 0x36;
+
+#define DHT11_PIN 7
+
+DHT HT(DHT11_PIN, DHT11);
+
+
+
+void setup(){
+  *myTCCR1A = 0x00; //normal mode
+  *myTCCR1B = 0x01; // no prescaling
+  *myTCCR1C = 0x00; //no force output compare
+  *myTIFR1 = 0x01;
+
+  Serial.begin(9600);
+  HT.begin();
+}
+
+void loop(){
+  Serial.print("before ");
+  Serial.println(*myTIFR1, HEX);
+  float h = HT.readHumidity();
+  Serial.print("Humidity = ");
+  Serial.print(h);
+  float t = HT.readTemperature(true);
+  Serial.print(" Temperature = ");
+  Serial.println(t);
+  my_delay(1000);
+}
+
