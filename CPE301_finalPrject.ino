@@ -53,11 +53,15 @@ volatile unsigned char* pin_h = (unsigned char*) 0x100;
 
 
 
-/*volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
+/*
+// UART Pointers
+volatile unsigned char *myUCSR0A = (unsigned char *)0x00C0;
 volatile unsigned char *myUCSR0B = (unsigned char *)0x00C1;
 volatile unsigned char *myUCSR0C = (unsigned char *)0x00C2;
 volatile unsigned int  *myUBRR0  = (unsigned int *) 0x00C4;
-volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;*/
+volatile unsigned char *myUDR0   = (unsigned char *)0x00C6;
+*/
+
 //adc pointers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
 volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
@@ -332,21 +336,74 @@ void DISABLED()
 
 }
 
+// Read USART0 RDA status bit and return non-zero true if set
+unsigned char U0kbhit(){
+  return (*myUCSR0A & RDA);
+}
+  
+// Read input character from USART0 input buffer
+unsigned char U0getchar(){
+  return myUDR0;
+}
+
+// Wait for USART0 TBE to be set then write character to
+// transmit buffer
+void U0putchar(unsigned char U0pdata){
+  while((*myUCSR0A & TBE) == 0){};
+    *myUDR0 = U0pdata;
+}
+
 /*
-//stepper motor based on button input
-if(digitalRead(2) == HIGH){
-    //Rotate CW slowly at 5 RPM
-    myStepper.setSpeed(7);
-    //Rotates clockwise if output is high, otherwise stops
-    myStepper.step(10);
+//these are global variables
+char time[14] = {'T', 'i', 'm', 'e', ':', ' ', ' ', ' ', ':', ' ', ' ', ':', ' ', ' '};
+char date[16] = {'D', 'a', 't', 'e', ':', ' ', ' ', ' ', '/', ' ', ' ', '/', ' ', ' ', ' ', ' '};
+tmElements_t tm;
+int newMinute = -1;
+int newSecond = -1;
+
+//this goes in setup function
+RTC.read(tm);
+newSecond = tm.Second;
+
+
+//read time and display to screen every minute
+bool read = RTC.read(tm);
+  //newSecond = tm.Second;
+  if (newMinute != tm.Minute && newSecond == tm.Second) {
+    newMinute = tm.Minute;
+    time[6] = (tm.Hour / 10 + '0');
+    time[7] = (tm.Hour % 10 + '0');
+    time[9] = (tm.Minute / 10 + '0');
+    time[10] = (tm.Minute % 10 + '0');
+    time[12] = (tm.Second / 10 + '0');
+    time[13] = (tm.Second % 10 + '0');
+
+    date[6] = (tm.Month / 10 + '0');
+    date[7] = (tm.Month % 10 + '0');
+    date[9] = (tm.Day / 10 + '0');
+    date[10] = (tm.Day % 10 + '0');
+    date[12] = (tmYearToCalendar(tm.Year) / 1000 + '0');
+    date[13] = (tmYearToCalendar(tm.Year) % 1000 / 100 + '0');
+    date[14] = (tmYearToCalendar(tm.Year) % 100 / 10 + '0');
+    date[15] = (tmYearToCalendar(tm.Year) % 10 + '0');
+
+    secondDigit = (tm.Hour % 10 + '0');
+    if(read){
+      for(int i = 0; i < 32; i++){
+        if(i < 14){
+          U0putchar(time[i]);
+        }
+        else if(i == 14){
+          U0putchar(' ');
+        }
+        else if(i < 31){
+          U0putchar(date[i - 15]);
+        }
+        else{
+          U0putchar('\n');
+        }
+      }
+    }
   }
-  else if(digitalRead(5) == HIGH){
-    //Rotate CW slowly at 5 RPM
-    myStepper.setSpeed(7);
-    //Rotates counterclockwise if output is high, otherwise stops
-    myStepper.step(-10);
-  }
-  else{
-    //*portH &= 0xFC;
-  }
+}
 */
