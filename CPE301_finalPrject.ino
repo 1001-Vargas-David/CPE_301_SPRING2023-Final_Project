@@ -218,20 +218,17 @@ unsigned int adc_read(unsigned char adc_channel_num)
 
 
 /*
-//NOTE: SET PIN 5 and 6 to input in setup function
- //0xF7 rotate counter clockwise, 0xFD clockwise;, LSB (i.e PH0) is enable
-  //*portH |= 0xFD;
-  if(digitalRead(Pin5) == HIGH){
-    //*portH |= 0xFD;
+//stepper motor based on button input
+if(digitalRead(2) == HIGH){
     //Rotate CW slowly at 5 RPM
-    myStepper.setSpeed(5);
+    myStepper.setSpeed(7);
     //Rotates clockwise if output is high, otherwise stops
     myStepper.step(10);
   }
-  else if(digitalRead(6) == HIGH){
+  else if(digitalRead(5) == HIGH){
     //Rotate CW slowly at 5 RPM
-    myStepper.setSpeed(5);
-    //Rotates clockwise if output is high, otherwise stops
+    myStepper.setSpeed(7);
+    //Rotates counterclockwise if output is high, otherwise stops
     myStepper.step(-10);
   }
   else{
