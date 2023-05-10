@@ -1,10 +1,19 @@
 # CPE_301_SPRING2023-Final_Project
-## Overview <br>
+## Overview
 &emsp;&emsp; For this project, we implemented a cooling system. The system can turn on and off by the press of a button by the user. The system idles whenever the temperature reaches the threshold of 70 degrees Fahrenheit or less (implying the room is cool enough based on the sensor). The system enters an error state whenever water levels are too low. The direction of the ventilation cannot be done in this state. The fan motor runs if the user turns on the system and the temperature is below the threshold and there is enough water for cooling. The system is disabled if the user decides to turn the system off. No monitoring of the temperature and humidity is done in this state. <br>
-## Constraints <br>
+## Constraints
 &emsp;&emsp; Since the water sensor is connected to an analog port and can only take 5v, a power supply was needed, where the power supply was implemented on the board and the source came from the wall. Connecting it to a battery was not enough to get the system to work to its full capacity. Another constraint regarding the water sensor is that each sensor reads the values based on the condition it’s in, so it may vary from sensor to sensor. Since the sensor grows rust over time after being put in the water, that may also affect the reading, thus scraping off the rust is needed. Another constraint is that since we couldn’t use the serial library functions, we have to use the UART meaning we could only output one character at a time. Displaying the time required us to break the number down and convert everything to an unsigned character so we could then display it. Since we had to use bitwise operation for fan, when the fan was turned on, it was set to a default speed. While running the cooling system, the water sensor started to get a little hot the longer it ran, so it limits the use of the water sensor which is essential to the system. <br>
 
-## Functions <br>
+## Libraries
+Libraries used along with sources for more information: <br>
+#include <LiquidCrystal.h> : https://www.arduino.cc/reference/en/libraries/liquidcrystal/ <br>
+#include <DHT.h> : https://reference.arduino.cc/reference/en/libraries/dht-sensor-library/ <br>
+#include <Stepper.h> : https://www.arduino.cc/reference/en/libraries/stepper/ <br>
+#include <Wire.h> : https://www.arduino.cc/reference/en/language/functions/communication/wire/ <br>
+#include <TimeLib.h> : https://www.arduino.cc/reference/en/libraries/time/ <br>
+#include <DS1307RTC.h> : https://www.arduino.cc/reference/en/libraries/ds1307rtc/ <br>
+
+## Functions
 Function name: setup <br>
 Function return type: void <br>
 Function parameters: none <br>
@@ -98,12 +107,15 @@ Function return type: void <br>
 Function parameters: None <br>
 Functionality: Waits for USART0 TBE to be set then and then it writes the character received in the parameter to transmit buffer which then is eventually displayed to the screen. <br>
 
+## Video Demonstration
+**Video 1** https://drive.google.com/file/d/1a7XPXXnOsQ1yXE6dsfiCuCF1Yd8p7WZx/view?usp=sharing <br>
+**Video 2** https://drive.google.com/file/d/1OAoFZ8FTLO8XV7Zqb6PKGSDLVxUcG4x5/view?usp=sharing <br>
 
 ## Tools
 **Software** <br>
 &emsp;&emsp;Arduino IDE <br>
 **Physical components** <br>
-&emsp;&emsp; Male-to-female wires, Male-to-male wires (jumper wires), Arduino Mega 2560 Controller Board, Breadboards, 4 LEDs (one of each: red, yellow, green, blue), button (small), resistors (330 ohm), USB cable, Power supply module, ULN2003 Stepper Motor Driver Board, LCD 1602 Module, Stepper Motor, Water Lever Detection Sensor Module, L293D, Fan Blade and 3V DC Motor (with wire), DS1307 RTC Module, DHT11 Temperature and Humidity Module, 9V 1A adapter.
+&emsp;&emsp; Male-to-female wires, Male-to-male wires (jumper wires), Arduino Mega 2560 Controller Board, Breadboards, 4 LEDs (one of each: red, yellow, green, blue), button (small), resistors (330 ohm), USB cable, Power supply module, ULN2003 Stepper Motor Driver Board, LCD 1602 Module, Stepper Motor, Water Lever Detection Sensor Module, L293D, Fan Blade and 3V DC Motor (with wire), DS1307 RTC Module, DHT11 Temperature and Humidity Module, 9V 1A adapter. <br>
 ## Resources/References
 How do I use a Real Time Clock with Arduino? RTC 1307 (https://www.youtube.com/watch?v=KgqMOPErWjk) <br>
 How to Set Up the DHT11 Humidity Sensor on an Arduino (circuitbasics.com) (https://www.circuitbasics.com/how-to-set-up-the-dht11-humidity-sensor-on-an-arduino/) <br>
