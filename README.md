@@ -101,9 +101,9 @@ Functionality: Waits for USART0 TBE to be set then and then it writes the charac
 
 ## Tools
 **Software** <br>
-Arduino IDE <br>
+&emsp;&emsp;Arduino IDE <br>
 **Physical components** <br>
-&emsp;&emsp; Male-to-female wires, Male-to-male wires (jumper wires), Arduino Mega 2560 Controller Board, Breadboards, 4 LEDs (one of each: red, yellow, green, blue), button (small), resistors (1k), USB cable, Power supply module, ULN2003 Stepper Motor Driver Board, LCD 1602 Module, Stepper Motor, Water Lever Detection Sensor Module, L293D, Fan Blade and 3V DC Motor (with wire), DS1307 RTC Module, DHT11 Temperature and Humidity Module, 9V 1A adapter.
+&emsp;&emsp; Male-to-female wires, Male-to-male wires (jumper wires), Arduino Mega 2560 Controller Board, Breadboards, 4 LEDs (one of each: red, yellow, green, blue), button (small), resistors (330 ohm), USB cable, Power supply module, ULN2003 Stepper Motor Driver Board, LCD 1602 Module, Stepper Motor, Water Lever Detection Sensor Module, L293D, Fan Blade and 3V DC Motor (with wire), DS1307 RTC Module, DHT11 Temperature and Humidity Module, 9V 1A adapter.
 ## Resources/References
 How do I use a Real Time Clock with Arduino? RTC 1307 (https://www.youtube.com/watch?v=KgqMOPErWjk) <br>
 How to Set Up the DHT11 Humidity Sensor on an Arduino (circuitbasics.com) (https://www.circuitbasics.com/how-to-set-up-the-dht11-humidity-sensor-on-an-arduino/) <br>
