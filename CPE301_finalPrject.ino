@@ -1,6 +1,9 @@
 #include <LiquidCrystal.h>
 #include <DHT.h>
 #include <Stepper.h>
+#include <Wire.h>
+#include <TimeLib.h>
+#include <DS1307RTC.h>
 
 //speedPin
 volatile unsigned char* port_d = (unsigned char*) 0x2B; 
@@ -68,10 +71,17 @@ volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
 volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
 volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 
+//stepper motor variables
 int stepsPerRevolution = 2048;
 int stepperMSpeed = 10;
 
 Stepper myStepper(stepsPerRevolution, 8, 10, 9, 11);
+
+//timer variables
+tmElements_t tm;
+int newMinute = -1;
+int newSecond = -1;
+bool readTime = 0;
 
 //pin A4
 #define SIGNAL_PIN 4
@@ -90,7 +100,13 @@ DHT HT(DHT11_PIN, DHT11);
 LiquidCrystal lcd(24, 26, 28, 30, 32, 34);
 
 void setup() {
-
+  //initialize the serial port on USART0:
+  U0init(9600);
+  //reads the current time
+  RTC.read(tm);
+  //get seconds from initial start to display every minute
+  newSecond = tm.Second;
+  
   //servo motor setup
   myStepper.setSpeed(stepperMSpeed);
   //setup for fan motor
@@ -131,6 +147,17 @@ void setup() {
 }
 
 void loop() {
+  //displays time and date every minute
+  if(state != 0 && (newMinute != tm.Minute && newSecond == tm.Second))
+  {
+    newMinute = tm.Minute;
+    //change this line to lcd info 
+    timeDisplay();
+    
+  }
+
+  readTime = RTC.read(tm);
+  
   //button pressed
   if(*pin_b & 0x01)
   { 
@@ -265,30 +292,6 @@ ISR(TIMER1_OVF_vect)
   isActive = !isActive;
 }
 
-void my_delay(unsigned int freq)
-{
-  // calc period
-  double period = 1.0/double(freq);
-  // 50% duty cycle
-  double half_period = period/ 2.0f;
-  // clock period def
-  double clk_period = 0.0000000625;
-  // calc ticks
-  unsigned int ticks = half_period / clk_period;
-  // stop the timer
-  *myTCCR1B &= 0xF8;
-  // set the counts
-  *myTCNT1 = (unsigned int) (65536 - ticks);
-  // start the timer
-  *myTCCR1B |= 0b00000001;
-  // wait for overflow
-  while((*myTIFR1 & 0x01)==0); // 0b 0000 0000
-  // stop the timer
-  *myTCCR1B &= 0xF8;   // 0b 0000 0000
-  // reset TOV           
-  *myTIFR1 |= 0x01;
-}
-
 void adc_init()
 {
   // setup the A register
@@ -336,14 +339,128 @@ void DISABLED()
 
 }
 
+void timeDisplay()
+{
+  if (RTC.read(tm)) {
+    printTimeInfo();
+  }   
+}
+
+void printTimeInfo()
+{
+  //Serial.print("Time = (Hours:minutes:seconds)");
+  U0putchar('T');
+  U0putchar('i');
+  U0putchar('m');
+  U0putchar('e');
+  U0putchar(' ');
+  U0putchar('=');
+  U0putchar(' ');
+
+  print2digits(tm.Hour);
+  U0putchar(':');
+  print2digits(tm.Minute);
+  U0putchar(':');
+  print2digits(tm.Second);
+  //Serial.print(", Date (D/M/Y) = ");
+  U0putchar(',');
+  U0putchar(' ');
+  U0putchar('D');
+  U0putchar('a');
+  U0putchar('t');
+  U0putchar('e');
+  U0putchar(' ');
+  U0putchar('=');
+  U0putchar(' ');
+  print2digits(tm.Month);
+  U0putchar('/');
+  print2digits(tm.Day);
+  U0putchar('/');
+  print4digits(tmYearToCalendar(tm.Year));
+  U0putchar('\n');
+}
+
+void print2digits(int number)
+{
+  unsigned char firstPart = (number/10) + '0';
+  U0putchar(firstPart);
+  unsigned char lastPart = (number%10) + '0';
+  U0putchar(lastPart);
+}
+
+void print4digits(int number)
+{
+  unsigned char var;
+  var = (number / 1000) +'0';
+  U0putchar(var);
+  number %= 1000;
+  var = (number /100) + '0';
+  U0putchar(var);
+  number %= 100;
+  var = (number / 10) +'0';
+  U0putchar(var);
+  var = (number % 10) + '0';
+  U0putchar(var);
+}
+
+void printStepperRotation(bool clockwise)
+{
+  if(!clockwise)
+  {
+    //Serial.Print("turning counterclockwise ");
+    U0putchar('t');
+    U0putchar('u');
+    U0putchar('r');
+    U0putchar('n');
+    U0putchar('i');
+    U0putchar('n');
+    U0putchar('g');
+    U0putchar(' ');
+    U0putchar('c');
+    U0putchar('o');
+    U0putchar('u');
+    U0putchar('n');
+    U0putchar('t');
+    U0putchar('e');
+    U0putchar('r');
+    U0putchar('c');
+    U0putchar('l');
+    U0putchar('o');
+    U0putchar('c');
+    U0putchar('k');
+    U0putchar('w');
+    U0putchar('i');
+    U0putchar('s');
+    U0putchar('e');
+    U0putchar(' ');
+  }
+  else
+  {
+    //Serial.Print("turning clockwise ");
+    U0putchar('t');
+    U0putchar('u');
+    U0putchar('r');
+    U0putchar('n');
+    U0putchar('i');
+    U0putchar('n');
+    U0putchar('g');
+    U0putchar(' ');
+    U0putchar('c');
+    U0putchar('l');
+    U0putchar('o');
+    U0putchar('c');
+    U0putchar('k');
+    U0putchar('w');
+    U0putchar('i');
+    U0putchar('s');
+    U0putchar('e');
+    U0putchar(' ');
+  }
+}
+
 // Read USART0 RDA status bit and return non-zero true if set
 unsigned char U0kbhit(){
   return (*myUCSR0A & RDA);
-}
-  
-// Read input character from USART0 input buffer
-unsigned char U0getchar(){
-  return myUDR0;
 }
 
 // Wait for USART0 TBE to be set then write character to
@@ -352,58 +469,3 @@ void U0putchar(unsigned char U0pdata){
   while((*myUCSR0A & TBE) == 0){};
     *myUDR0 = U0pdata;
 }
-
-/*
-//these are global variables
-char time[14] = {'T', 'i', 'm', 'e', ':', ' ', ' ', ' ', ':', ' ', ' ', ':', ' ', ' '};
-char date[16] = {'D', 'a', 't', 'e', ':', ' ', ' ', ' ', '/', ' ', ' ', '/', ' ', ' ', ' ', ' '};
-tmElements_t tm;
-int newMinute = -1;
-int newSecond = -1;
-
-//this goes in setup function
-RTC.read(tm);
-newSecond = tm.Second;
-
-
-//read time and display to screen every minute
-bool read = RTC.read(tm);
-  //newSecond = tm.Second;
-  if (newMinute != tm.Minute && newSecond == tm.Second) {
-    newMinute = tm.Minute;
-    time[6] = (tm.Hour / 10 + '0');
-    time[7] = (tm.Hour % 10 + '0');
-    time[9] = (tm.Minute / 10 + '0');
-    time[10] = (tm.Minute % 10 + '0');
-    time[12] = (tm.Second / 10 + '0');
-    time[13] = (tm.Second % 10 + '0');
-
-    date[6] = (tm.Month / 10 + '0');
-    date[7] = (tm.Month % 10 + '0');
-    date[9] = (tm.Day / 10 + '0');
-    date[10] = (tm.Day % 10 + '0');
-    date[12] = (tmYearToCalendar(tm.Year) / 1000 + '0');
-    date[13] = (tmYearToCalendar(tm.Year) % 1000 / 100 + '0');
-    date[14] = (tmYearToCalendar(tm.Year) % 100 / 10 + '0');
-    date[15] = (tmYearToCalendar(tm.Year) % 10 + '0');
-
-    secondDigit = (tm.Hour % 10 + '0');
-    if(read){
-      for(int i = 0; i < 32; i++){
-        if(i < 14){
-          U0putchar(time[i]);
-        }
-        else if(i == 14){
-          U0putchar(' ');
-        }
-        else if(i < 31){
-          U0putchar(date[i - 15]);
-        }
-        else{
-          U0putchar('\n');
-        }
-      }
-    }
-  }
-}
-*/
